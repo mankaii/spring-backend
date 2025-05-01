@@ -1,6 +1,11 @@
 package com.example.backend
 
 import org.springframework.web.bind.annotation.*
+import jakarta.validation.Valid
+import com.example.backend.dto.PostRequest
+import com.example.backend.dto.PostResponse
+
+
 
 @RestController
 @RequestMapping("/posts")
@@ -12,16 +17,23 @@ class PostController(
     fun getAll(): List<Post> = postRepository.findAll()
 
     @PostMapping
-    fun create(@RequestBody post: Post): Post = postRepository.save(post)
+    fun create(@Valid @RequestBody request: PostRequest): PostResponse {
+        val post = Post(title = request.title, content = request.content)
+        val saved = postRepository.save(post)
+        return PostResponse(saved.id, saved.title, saved.content)
+    }
+    
 
     @GetMapping("/{id}")
-    fun getById(@PathVariable id: Long): Post =
-        postRepository.findById(id).orElseThrow { NoSuchElementException("Post not found") }
+    fun getById(@PathVariable id: Long): PostResponse {
+        val post = postRepository.findById(id).orElseThrow { NoSuchElementException("Post not found") }
+        return PostResponse(post.id, post.title, post.content)
+    }
 
     @PutMapping("/{id}")
-    fun updatePost(@PathVariable id: Long, @RequestBody updated: Post): Post {
+    fun updatePost(@PathVariable id: Long, @RequestBody @Valid request: PostRequest): Post {
         val post = postRepository.findById(id).orElseThrow { NoSuchElementException("Post not found") }
-        val updatedPost = post.copy(title = updated.title, content = updated.content)
+        val updatedPost = post.copy(title = request.title, content = request.content)
         return postRepository.save(updatedPost)
     }
 
